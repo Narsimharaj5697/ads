@@ -1,0 +1,385 @@
+1. Write a program to implement LEFTIST-HEAP and operations of Insert, Delete min and MELD operations.
+
+class LeftistNode {
+    int data;
+    LeftistNode left;
+    LeftistNode right;
+    int rank;
+
+    LeftistNode(int data) {
+        this.data = data;
+        this.left = this.right = null;
+        this.rank = 1;
+    }
+}
+
+public class LeftistHeap {
+    LeftistNode root;
+
+    public LeftistHeap() {
+        this.root = null;
+    }
+
+    public void merge(LeftistHeap otherHeap) {
+        this.root = mergeHeaps(this.root, otherHeap.root);
+    }
+
+    public static LeftistNode mergeHeaps(LeftistNode h1, LeftistNode h2) {
+        if (h1 == null)
+            return h2;
+        if (h2 == null)
+            return h1;
+
+        LeftistNode returnedHeap, finalroot;
+        if (h1.data < h2.data) {
+            returnedHeap = mergeHeaps(h1.right, h2);
+            finalroot = h1;
+        } else {
+            returnedHeap = mergeHeaps(h1, h2.right);
+            finalroot = h2;
+        }
+
+        if (getRank(returnedHeap) > getRank(finalroot.left)) {
+            LeftistNode temp = finalroot.left;
+            finalroot.left = returnedHeap;
+            finalroot.right = temp;
+        } else {
+            finalroot.right = returnedHeap;
+        }
+
+        finalroot.rank = getRank(finalroot.right) + 1;
+
+        return finalroot;
+    }
+
+    public static int getRank(LeftistNode node) {
+        return node == null ? 0 : node.rank;
+    }
+
+    public void insertElement(int data) {
+        LeftistNode newNode = new LeftistNode(data);
+        root = mergeHeaps(root, newNode);
+    }
+
+    public int deleteMin() {
+        if (root == null) {
+            System.out.println("Leftist Heap is empty..!");
+            return -1;
+        }
+        int minEle = root.data;
+        root = mergeHeaps(root.left, root.right);
+        return minEle;
+    }
+
+    public void printHeap(LeftistNode node) {
+        if (node == null)
+            return;
+        System.out.print(node.data + " ");
+        printHeap(node.left);
+        printHeap(node.right);
+    }
+
+    public static void main(String args[]) {
+        LeftistHeap heap1 = new LeftistHeap();
+        heap1.insertElement(3);
+        heap1.insertElement(4);
+        heap1.insertElement(6);
+
+        LeftistHeap heap2 = new LeftistHeap();
+        heap2.insertElement(10);
+        heap2.insertElement(1);
+        heap2.insertElement(12);
+
+        System.out.print("Leftist Heap 1: ");
+        heap1.printHeap(heap1.root);
+        System.out.println();
+
+        System.out.print("Leftist Heap 2: ");
+        heap2.printHeap(heap2.root);
+        System.out.println();
+
+        heap1.merge(heap2);
+
+        System.out.print("Leftist Heap after merging: ");
+        heap1.printHeap(heap1.root);
+        System.out.println();
+
+        System.out.println("Min ele in the Leftist heap is: " + heap1.deleteMin());
+        System.out.print("Leftist Heap after deletion of min ele: ");
+        heap1.printHeap(heap1.root);
+    }
+}
+
+2. Write a program to implement Binomial HEAP and all basic operations on it
+
+class BinomialHeapNode {
+    int key;
+    int degree;
+    BinomialHeapNode parent;
+    BinomialHeapNode leftMost_Child;
+    BinomialHeapNode right_Immediate_Sibling;
+
+    public BinomialHeapNode(int key) {
+        this.key = key;
+        this.degree = 0;
+        this.parent = this.leftMost_Child = this.right_Immediate_Sibling = null;
+    }
+}
+
+public class BinomialHeap {
+    BinomialHeapNode head;
+
+    public BinomialHeap() {
+        this.head = null;
+    }
+
+    public BinomialHeapNode mergeRoots(BinomialHeapNode h1, BinomialHeapNode h2) {
+        if (h1 == null)
+            return h2;
+        if (h2 == null)
+            return h1;
+
+        BinomialHeapNode merged;
+
+        if (h1.degree <= h2.degree) {
+            merged = h1;
+            merged.right_Immediate_Sibling = mergeRoots(h1.right_Immediate_Sibling, h2);
+        } else {
+            merged = h2;
+            merged.right_Immediate_Sibling = mergeRoots(h1, h2.right_Immediate_Sibling);
+        }
+        return merged;
+    }
+
+    public void merge(BinomialHeap otherHeap) {
+        this.head = mergeRoots(this.head, otherHeap.head);
+
+        if (this.head == null) {
+            return;
+        }
+
+        BinomialHeapNode prev = null;
+        BinomialHeapNode current = this.head;
+        BinomialHeapNode next = current.right_Immediate_Sibling;
+
+        while (next != null) {
+            if ((current.degree != next.degree) || (next.right_Immediate_Sibling != null
+                    && next.right_Immediate_Sibling.degree == current.degree)) {
+                prev = current;
+                current = next;
+            } else {
+                if (current.key < next.key) {
+                    current.right_Immediate_Sibling = next.right_Immediate_Sibling;
+                    link(current, next);
+                } else {
+                    if (prev == null) {
+                        this.head = next;
+                    } else {
+                        prev.right_Immediate_Sibling = next;
+                    }
+                    link(next, current);
+                    current = next;
+                }
+            }
+            next = current.right_Immediate_Sibling;
+        }
+    }
+
+    public void link(BinomialHeapNode smaller, BinomialHeapNode larger) {
+        larger.parent = smaller;
+        larger.right_Immediate_Sibling = smaller.leftMost_Child;
+        smaller.leftMost_Child = larger;
+        smaller.degree++;
+    }
+
+    public void insert(int key) {
+        BinomialHeap newHeap = new BinomialHeap();
+        newHeap.head = new BinomialHeapNode(key);
+        merge(newHeap);
+    }
+
+    public BinomialHeapNode findMin() {
+        int min = Integer.MAX_VALUE;
+
+        BinomialHeapNode temp = this.head;
+        BinomialHeapNode prev = null;
+
+        while (temp != null) {
+            if (temp.key < min) {
+                min = temp.key;
+            }
+            prev = temp;
+            temp = temp.right_Immediate_Sibling;
+        }
+
+        return prev;
+    }
+
+    public BinomialHeapNode reverseRootList(BinomialHeapNode root) {
+        BinomialHeapNode prev = null;
+        BinomialHeapNode current = root;
+        BinomialHeapNode next = null;
+
+        while (current != null) {
+            next = current.right_Immediate_Sibling;
+            current.right_Immediate_Sibling = prev;
+            prev = current;
+            current = next;
+        }
+
+        return prev;
+    }
+
+    public void deleteMin() {
+        if (head == null) {
+            System.out.println("Heap is Empty..!");
+            return;
+        }
+
+        BinomialHeapNode current = this.head, prev = null;
+        BinomialHeapNode minNode = findMin();
+
+        // point to the prev node of the minimum node
+        while (current.key != minNode.key) {
+            prev = current;
+            current = current.right_Immediate_Sibling;
+        }
+
+        // if minNode is at the beginning
+        if (prev == null) {
+            this.head = this.head.right_Immediate_Sibling;
+        } else {
+            prev.right_Immediate_Sibling = current.right_Immediate_Sibling;
+        }
+
+        current = current.leftMost_Child;
+        BinomialHeapNode random = current;
+
+        // seperates min node children from the original heap
+        while (current != null) {
+            current.parent = null;
+            current = current.right_Immediate_Sibling;
+        }
+
+        // reverse and merge the children of minNode to the original heap
+        BinomialHeap newHeap = new BinomialHeap();
+        newHeap.head = reverseRootList(random);
+
+        merge(newHeap);
+
+    }
+
+    public BinomialHeapNode findNode(int key) {
+        return findNodeInTree(head, key);
+    }
+
+    // Recursive helper method to search a node in the heap
+    private BinomialHeapNode findNodeInTree(BinomialHeapNode node, int key) {
+        if (node == null) {
+            return null;
+        }
+
+        // Check if the current node matches the key
+        if (node.key == key) {
+            return node;
+        }
+
+        // Search in the child nodes
+        BinomialHeapNode foundInChild = findNodeInTree(node.leftMost_Child, key);
+        if (foundInChild != null) {
+            return foundInChild;
+        }
+
+        // Search in the sibling nodes
+        return findNodeInTree(node.right_Immediate_Sibling, key);
+    }
+
+    public void decreaseKey(int old_value, int new_value) {
+        BinomialHeapNode temp = findNode(old_value);
+
+        if (temp == null) {
+            System.out.println("Element not found in the Binomial Heap");
+            return;
+        }
+
+        if (old_value < new_value) {
+            System.out.println("New Value must be higher than the original value");
+            return;
+        }
+
+        temp.key = new_value;
+        BinomialHeapNode parent = temp.parent;
+
+        while (parent != null && temp.key < parent.key) {
+            int curr = temp.key;
+            temp.key = parent.key;
+            parent.key = curr;
+            temp = parent;
+            parent = parent.parent;
+        }
+    }
+
+    public void deleteNode(int value) {
+        decreaseKey(value, Integer.MIN_VALUE);
+
+        deleteMin();
+    }
+
+    public void printTree(BinomialHeapNode node, BinomialHeapNode current) {
+
+        if (node != null) {
+            System.out.print(node.key + " ");
+            printTree(node.leftMost_Child, current);
+            if (node.right_Immediate_Sibling != current.right_Immediate_Sibling)
+                printTree(node.right_Immediate_Sibling, current);
+        }
+
+    }
+
+    public void printHeap() {
+        if (head == null) {
+            System.out.println("Binomial Heap : " + head);
+            return;
+        }
+        System.out.println("Binomial Heap:");
+        BinomialHeapNode current = head;
+        while (current != null) {
+            System.out.print("B" + current.degree + " ");
+            printTree(current, current);
+            System.out.println();
+            current = current.right_Immediate_Sibling;
+        }
+
+    }
+
+    public static void main(String args[]) {
+        BinomialHeap heap1 = new BinomialHeap();
+        heap1.insert(10);
+        heap1.insert(20);
+        heap1.insert(5);
+        heap1.insert(15);
+        heap1.insert(25);
+        heap1.insert(30);
+        heap1.insert(50);
+
+        heap1.printHeap();
+
+        System.out.println("Minimum element in the binomial heap is: " + heap1.findMin().key);
+
+        heap1.deleteMin();
+        System.out.println("Heap after deletion of min:");
+        heap1.printHeap();
+
+        int old_value = 30;
+        int new_value = 1;
+        heap1.decreaseKey(old_value, new_value);
+        System.out.println("Binomial Heap after decreasing a key " + old_value + " to " + new_value + " is: ");
+        heap1.printHeap();
+
+        int node = 25;
+        heap1.deleteNode(node);
+        System.out.println("Binomial Heap after deleting a Node " + node + ": ");
+        heap1.printHeap();
+    }
+
+}
